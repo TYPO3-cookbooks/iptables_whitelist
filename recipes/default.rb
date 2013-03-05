@@ -8,14 +8,14 @@ nodes = {}
 # for testing with e.g. vagrant (then uncomment the next paragraph!)
 # nodes = { :your_machine => "192.168.156.1", :other_machine => "192.168.156.2" }
 
-search(:node, "role:#{role_search}").each do |n|
-  nodes << {n[:fqdn] => n[:ipaddress]} unless nil? n[:ipaddress]
+search(:node, "role:#{role_search}").reject{ |n| n[:ipaddress] == nil }.each do |n|
+  nodes[n[:fqdn]] = n[:ipaddress]
 end
 
-Chef::Log.info "Whitelisting the following IPs for port #{dport}: " +  nodes.inspect
+Chef::Log.info "Whitelisting the following IPs for port #{dport}: " +  nodes.sort.inspect
 
 # ACCEPT all known hosts
-nodes.values.sort.each do |ip|
+nodes.values.each do |ip|
   simple_iptables_rule "graphite" do
     direction "INPUT"
     rule "--proto tcp --dport #{dport} --src #{ip}"
